@@ -1,18 +1,25 @@
-const express = require("express")
-const app = express()
-const morgan = require("morgan")
-const PORT = process.env.PORT || 9999
-const { dbConn } = require("./utils/dbConnect")
-const indexRouter = require("./routes/public")
-const privateRouter = require("./routes/private")
-app.use(morgan("dev"))
-app.use(express.urlencoded({ extended: false }))
-app.use(express.json())
+const express = require("express");
+const sequelize = require("./config/database");
+const authRoutes = require("./routes/authRoutes");
+const organisationRoutes = require("./routes/organisationRoutes");
+const usersRoutes = require("./routes/usersRoutes");
+require("dotenv").config();
 
-app.use(indexRouter)
-app.use(privateRouter)
+const app = express();
+const port = process.env.PORT || 3000;
 
-dbConn()
-app.listen(PORT, () => {
-    console.info("Stage 2 API running on port", PORT)
-})
+app.use(express.json());
+app.use("/auth", authRoutes);
+app.use("/api/organisations", organisationRoutes);
+app.use("/api/users", usersRoutes);
+
+app.listen(port, async () => {
+	try {
+		await sequelize.sync({ alter: true });
+		console.log(`Server running on port: ${port}`);
+	} catch (error) {
+		console.error("Unable to connect to the database:", error);
+	}
+});
+
+module.exports = { app };
